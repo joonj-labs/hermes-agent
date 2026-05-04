@@ -46,13 +46,17 @@ def _run_boot_agent(content: str) -> None:
     """Spawn a one-shot agent session to execute the boot instructions."""
     try:
         from run_agent import AIAgent
+        from hermes_cli.config import load_config
 
         prompt = _build_boot_prompt(content)
+        cfg = load_config()
+        model_cfg = cfg.get("model", {})
         agent = AIAgent(
             quiet_mode=True,
             skip_context_files=True,
             skip_memory=True,
             max_iterations=20,
+            model=(model_cfg.get("default") or ""),
         )
         result = agent.run_conversation(prompt)
         response = result.get("final_response", "")
