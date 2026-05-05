@@ -2,11 +2,23 @@
 
 ## Meta
 - **name**: git-commit-skill
-- **description**: Streamlined git commit workflow for hermes-agent projects — stages changes, shows diff, commits with semantic message, and pushes to the correct branch.
+- **description**: Streamlined git commit workflow for JOONJ'S personal hermes-agent installation. ONLY for use with the joonj-agentcore project and ~/.hermes/hermes-agent installation.
 - **version**: 1.0.0
 - **platforms**: [linux, macos, wsl]
-- **metadata.hermes.tags**: git, workflow, backup, commit
+- **metadata.hermes.tags**: git, workflow, backup, commit, joonj
 - **metadata.hermes.category**: devops
+- **metadata.hermes.config**: N/A — hardcoded paths for this user's setup only
+
+## ⚠️ IMPORTANT — Project-Specific ⚠️
+
+This skill is **CUSTOM** and **PERSONAL** to Junj's hermes-agent installation. It is NOT a general-purpose tool.
+
+**Hardcoded paths:**
+- Project: `/home/joonj/projects/joonj-agentcore`
+- Installation: `/home/joonj/.hermes/hermes-agent`
+- Remote: `origin/joonj-agentcore`
+
+**DO NOT use this skill on other projects.** It will fail or behave incorrectly on non-joonj hermes installations.
 
 ## Usage
 
@@ -18,7 +30,7 @@ If `<message>` is not provided, the skill will auto-generate a commit message ba
 
 ## What This Skill Does
 
-- **Detects project type**: Works on `joonj-agentcore/` worktree or `~/.hermes/hermes-agent/` installation
+- **Project-specific**: ONLY works on Junj's `joonj-agentcore/` worktree or `~/.hermes/hermes-agent/` installation
 - **Stops accidental main branch commits**: Will NOT commit to `main` or `origin/main` — only `joonj-agentcore` branch is allowed
 - **Shows diff before commit**: Displays exactly what files will be committed
 - **Semantic auto-message**: If no message provided, generates one from file patterns (e.g., "Update skill", "Fix bug", "Clean artifacts")
@@ -30,15 +42,16 @@ If `<message>` is not provided, the skill will auto-generate a commit message ba
 
 - ❌ **NEVER** commit directly to `main` branch
 - ❌ **NEVER** force-push to `main`
+- ❌ **DO NOT USE** on other projects
 - ✅ **ALWAYS** commit to `joonj-agentcore` branch
 - ✅ **ALWAYS** push to `origin/joonj-agentcore`
 
-## Git Strategy (remembered)
+## Git Strategy
 
 ```
 NousResearch/hermes-agent ── pull only ──→ joonj-labs/hermes-agent ── pull only ──→ joonj-labs/joonj-agentcore (GitHub)
                                                                                               ↑
-                                                                                         push here
+                                                                                         push here for commits
                                                                                               ↑
 ~/projects/joonj-agentcore (local) ◄─────────────────────────────────────────────────┘
          ↑
@@ -60,34 +73,13 @@ NousResearch/hermes-agent ── pull only ──→ joonj-labs/hermes-agent ─
 /skill git-commit-skill "Clean: remove stale files and relocate plans"
 ```
 
-## Implementation
+## Implementation Notes
 
-The skill is implemented as a CLI wrapper around git commands:
-
+The shell script (`git-commit.sh`) has hardcoded paths:
 ```bash
-# 1. Detect project root (worktree takes priority)
-PROJECT_ROOT="${HERMES_PROJECTS_ROOT:-/home/joonj/projects}/joonj-agentcore"
-if [ ! -d "$PROJECT_ROOT/.git" ]; then
-    PROJECT_ROOT="$HOME/.hermes/hermes-agent"
-fi
-
-# 2. Check current branch — reject if on main
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [ "$BRANCH" = "main" ]; then
-    echo "ERROR: Cannot commit to main branch. Switch to joonj-agentcore first."
-    exit 1
-fi
-
-# 3. Stage all changes
-git add -A
-
-# 4. Show diff
-git diff --cached --stat
-
-# 5. Commit (auto or provided message)
-git commit -m "$MESSAGE"
-
-# 6. Pull rebase if divergent, then push
-git pull --rebase origin joonj-agentcore 2>/dev/null || true
-git push origin joonj-agentcore
+PROJECT_ROOT="/home/joonj/projects/joonj-agentcore"  # worktree (priority)
+# Falls back to:
+PROJECT_ROOT="$HOME/.hermes/hermes-agent"             # installation
 ```
+
+Both paths are Junj-specific. The script checks for `.git` directory to validate.
