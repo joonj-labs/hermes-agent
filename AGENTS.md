@@ -13,6 +13,12 @@ source .venv/bin/activate   # or: source venv/bin/activate
 `$HOME/.hermes/hermes-agent/venv` (for worktrees that share a venv with the
 main checkout).
 
+## Git Workflow
+
+A post-commit hook (`.git/hooks/post-commit`) automatically pushes to
+`origin/joonj-agentcore` after every commit on that branch. No manual
+`git push` needed — just commit and the hook handles it.
+
 ## Project Structure
 
 File counts shift constantly — don't treat the tree below as exhaustive.
