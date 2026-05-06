@@ -11,6 +11,7 @@
 
 ## What This Skill Does
 
+- **hermes-agent only**: Requires `run_agent.py` in the repo root OR remote URL contains "hermes-agent" or "NousResearch"
 - **Auto-detects installation**: Finds the active hermes-agent git repo (worktree or installation) automatically
 - **Stops accidental main branch commits**: Will NOT commit to `main` or `origin/main`
 - **Shows diff before commit**: Displays exactly what files will be committed
@@ -21,6 +22,7 @@
 
 - ❌ **NEVER** commit directly to `main` branch
 - ❌ **NEVER** force-push to `main`
+- ❌ **Only works in hermes-agent repos** — will error if run in other projects
 
 ## Examples
 

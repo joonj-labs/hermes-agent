@@ -22,8 +22,15 @@ detect_hermes_git_root() {
     local dir="$current_dir"
     while [[ "$dir" != "/" ]]; do
         if [[ -d "$dir/.git" ]]; then
-            # Verify this looks like a hermes-agent repo (has expected remotes or structure)
-            if git -C "$dir" remote get-url origin &>/dev/null 2>&1 || [[ -f "$dir/run_agent.py" ]]; then
+            # Must have run_agent.py (hermes-agent entry point)
+            if [[ -f "$dir/run_agent.py" ]]; then
+                echo "$dir"
+                return 0
+            fi
+            # Or check remote URL for hermes-agent indicators
+            local remote_url
+            remote_url=$(git -C "$dir" remote get-url origin 2>/dev/null || echo "")
+            if echo "$remote_url" | grep -qi "hermes-agent\|nousresearch"; then
                 echo "$dir"
                 return 0
             fi
@@ -33,13 +40,15 @@ detect_hermes_git_root() {
 
     # Fallback: check common installation paths relative to HOME
     local home_hermes="$HOME/.hermes/hermes-agent"
-    if [[ -d "$home_hermes/.git" ]]; then
+    if [[ -d "$home_hermes/.git" ]] && [[ -f "$home_hermes/run_agent.py" ]]; then
         echo "$home_hermes"
         return 0
     fi
 
-    echo "ERROR: Could not find a hermes-agent git repository." >&2
-    echo "Run this script from within a hermes-agent installation." >&2
+    echo "ERROR: Not a hermes-agent repository." >&2
+    echo "This skill only works in hermes-agent installations." >&2
+    echo "Ensure you're running from a directory containing run_agent.py" >&2
+    echo "or a git repo with 'hermes-agent' or 'NousResearch' in its remote URL." >&2
     exit 1
 }
 
