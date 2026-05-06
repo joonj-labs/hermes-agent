@@ -1,63 +1,54 @@
 #!/usr/bin/env bash
 #
-# git-commit-skill — Streamlined commit workflow for hermes-agent installations
+# joonj-agentcore-commit-skill — Commit workflow for THIS hermes-agent installation
 #
-# Auto-detects the active hermes-agent git repo (worktree or installation).
-# Works in any hermes-agent installation — no hardcoded paths.
+# ⚠️  PERSONAL AND SPECIFIC TO THIS INSTALLATION ONLY  ⚠️
+# ⚠️  DO NOT USE ON OTHER PROJECTS  ⚠️
+#
+# Paths:
+#   - Worktree:  /home/joonj/projects/joonj-agentcore
+#   - Install:   ~/.hermes/hermes-agent
+#   - Branch:    joonj-agentcore
 #
 # Usage:
-#   git-commit-skill [optional commit message]
+#   joonj-agentcore-commit-skill [optional commit message]
 #
 
 set -euo pipefail
 
 # ============================================================
-# Auto-detect hermes-agent git root
+# INSTALLATION-SPECIFIC CONFIG — DO NOT MODIFY FOR OTHER PROJECTS
 # ============================================================
-
-detect_hermes_git_root() {
-    local current_dir="${1:-$(pwd)}"
-
-    # Walk up from current directory looking for a valid hermes-agent git repo
-    local dir="$current_dir"
-    while [[ "$dir" != "/" ]]; do
-        if [[ -d "$dir/.git" ]]; then
-            # Must have run_agent.py (hermes-agent entry point)
-            if [[ -f "$dir/run_agent.py" ]]; then
-                echo "$dir"
-                return 0
-            fi
-            # Or check remote URL for hermes-agent indicators
-            local remote_url
-            remote_url=$(git -C "$dir" remote get-url origin 2>/dev/null || echo "")
-            if echo "$remote_url" | grep -qi "hermes-agent\|nousresearch"; then
-                echo "$dir"
-                return 0
-            fi
-        fi
-        dir="$(dirname "$dir")"
-    done
-
-    # Fallback: check common installation paths relative to HOME
-    local home_hermes="$HOME/.hermes/hermes-agent"
-    if [[ -d "$home_hermes/.git" ]] && [[ -f "$home_hermes/run_agent.py" ]]; then
-        echo "$home_hermes"
-        return 0
-    fi
-
-    echo "ERROR: Not a hermes-agent repository." >&2
-    echo "This skill only works in hermes-agent installations." >&2
-    echo "Ensure you're running from a directory containing run_agent.py" >&2
-    echo "or a git repo with 'hermes-agent' or 'NousResearch' in its remote URL." >&2
-    exit 1
-}
-
-# ============================================================
-# CONFIG — Safety rules (generic, no hardcoded paths)
-# ============================================================
-
+VALID_PROJECT_ROOTS=(
+    "/home/joonj/projects/joonj-agentcore"
+    "$HOME/.hermes/hermes-agent"
+)
+REMOTE_BRANCH="joonj-agentcore"
 FORBIDDEN_BRANCHES=("main" "origin/main")
 # ============================================================
+
+# Detect if we're in a valid project
+detect_project_root() {
+    local current_dir
+    current_dir="$(pwd)"
+
+    for candidate in "${VALID_PROJECT_ROOTS[@]}"; do
+        # Expand $HOME if present
+        candidate="${candidate/\$HOME/$HOME}"
+        if [[ -d "$candidate/.git" ]]; then
+            echo "$candidate"
+            return 0
+        fi
+    done
+
+    echo "ERROR: Not in a valid hermes-agent project." >&2
+    echo "This script is specific to Junj's installation." >&2
+    echo "Valid paths:" >&2
+    for p in "${VALID_PROJECT_ROOTS[@]}"; do
+        echo "  - $p" >&2
+    done
+    exit 1
+}
 
 # Safety check — never commit to forbidden branches
 check_branch() {
@@ -68,7 +59,8 @@ check_branch() {
     for forbidden in "${FORBIDDEN_BRANCHES[@]}"; do
         if [[ "$branch" == "$forbidden" ]]; then
             echo "ERROR: Cannot commit to '$forbidden' branch." >&2
-            echo "Switch to a feature branch and try again." >&2
+            echo "This is a safety rule for Junj's personal setup." >&2
+            echo "Switch to $REMOTE_BRANCH branch first." >&2
             exit 1
         fi
     done
@@ -104,11 +96,12 @@ main() {
     local branch
     local message="${1:-}"
 
-    echo "=== git-commit-skill ==="
+    echo "=== joonj-agentcore-commit-skill ==="
+    echo "⚠️  Personal tool for Junj's hermes-agent installation only ⚠️"
 
-    root=$(detect_hermes_git_root)
+    root=$(detect_project_root)
     cd "$root"
-    echo "Repo: $(basename "$root")"
+    echo "Project: $root"
 
     branch=$(check_branch "$root")
     echo "Branch: $branch"
@@ -133,14 +126,14 @@ main() {
         git commit -m "$message"
 
         echo ""
-        echo "Pushing to origin/$branch..."
-        if git pull --rebase origin "$branch" 2>/dev/null; then
+        echo "Pushing to origin/$REMOTE_BRANCH..."
+        if git pull --rebase origin "$REMOTE_BRANCH" 2>/dev/null; then
             :
         fi
 
-        if git push origin "$branch"; then
+        if git push origin "$REMOTE_BRANCH"; then
             echo ""
-            echo "✅ Done. Pushed to origin/$branch"
+            echo "✅ Done. Pushed to origin/$REMOTE_BRANCH"
             git log --oneline -3
         else
             echo ""
